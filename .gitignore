@@ -6,3 +6,5 @@ release/
 .env
 .env.*
 launcher-config.json
+PLAN.md
+LAUNCHER_PLAN.md
