@@ -1,10 +1,13 @@
 import { app, BrowserWindow, ipcMain, Menu } from 'electron'
 import { fileURLToPath } from 'url'
+import { createRequire } from 'module'
 import { dirname, join } from 'path'
 import { loadLauncherConfig, refreshPaths, saveLauncherConfig } from './launcher-config.js'
 import { ProcessManager } from './process-manager.js'
 import type { ComponentId } from './process-manager.js'
 import { checkMods, writeModlist, openCollection } from './mod-manager.js'
+
+const require = createRequire(import.meta.url)
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 
@@ -68,28 +71,32 @@ delete process.env.GH_TOKEN
 delete process.env.GITHUB_TOKEN
 
 function runUpdateCheck(): void {
-  // electron-updater is CJS; with ESM dynamic import the exports land on .default
-  import('electron-updater').then((mod: any) => {
-    const autoUpdater = mod.autoUpdater ?? mod.default?.autoUpdater ?? mod.default
+  try {
+    // Use createRequire to load the CJS module directly — avoids ESM/CJS
+    // interop issues where dynamic import() misplaces named exports.
+    const { autoUpdater } = require('electron-updater')
 
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
 
     autoUpdater.on('checking-for-update', () =>
       mainWindow?.webContents.send('update:checking'))
-    autoUpdater.on('update-available', (info: unknown) =>
+    autoUpdater.on('update-available', (info: any) =>
       mainWindow?.webContents.send('update:available', info))
-    autoUpdater.on('update-not-available', () =>
-      mainWindow?.webContents.send('update:not-available'))
-    autoUpdater.on('update-downloaded', (info: unknown) =>
+    autoUpdater.on('update-not-available', (info: any) =>
+      mainWindow?.webContents.send('update:not-available', {
+        current: app.getVersion(), latest: info?.version,
+      }))
+    autoUpdater.on('update-downloaded', (info: any) =>
       mainWindow?.webContents.send('update:downloaded', info))
     autoUpdater.on('error', (err: Error) =>
       mainWindow?.webContents.send('update:error', err.message))
 
     autoUpdater.checkForUpdates().catch((err: Error) =>
       mainWindow?.webContents.send('update:error', err.message))
-  }).catch((err: Error) =>
-    mainWindow?.webContents.send('update:error', err.message))
+  } catch (err) {
+    mainWindow?.webContents.send('update:error', (err as Error).message)
+  }
 }
 
 app.whenReady().then(() => {
@@ -150,10 +157,10 @@ ipcMain.handle('config:refresh-paths', () => {
 })
 
 ipcMain.handle('update:install-now', () => {
-  import('electron-updater').then((mod: any) => {
-    const autoUpdater = mod.autoUpdater ?? mod.default?.autoUpdater ?? mod.default
+  try {
+    const { autoUpdater } = require('electron-updater')
     autoUpdater.quitAndInstall()
-  }).catch(() => {})
+  } catch {}
 })
 
 ipcMain.handle('mods:check', () => checkMods(currentConfig?.conan.exePath ?? ''))

@@ -41,7 +41,7 @@ declare global {
       onError: (cb: (data: { id: string; message: string }) => void) => void
       onUpdateChecking: (cb: () => void) => void
       onUpdateAvailable: (cb: (info: unknown) => void) => void
-      onUpdateNotAvailable: (cb: () => void) => void
+      onUpdateNotAvailable: (cb: (info: { current: string; latest: string }) => void) => void
       onUpdateDownloaded: (cb: (info: unknown) => void) => void
       onUpdateError: (cb: (message: string) => void) => void
       installUpdate: () => void
@@ -112,8 +112,8 @@ window.launcher.onUpdateAvailable(() => {
   banner.classList.remove('hidden')
 })
 
-window.launcher.onUpdateNotAvailable(() => {
-  showToast('El launcher está actualizado')
+window.launcher.onUpdateNotAvailable((info) => {
+  showToast(`El launcher está actualizado (instalado: ${info?.current ?? '?'} · último: ${info?.latest ?? '?'})`)
 })
 
 window.launcher.onUpdateError((message) => {

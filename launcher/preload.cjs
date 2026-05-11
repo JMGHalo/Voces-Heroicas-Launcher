@@ -11,7 +11,7 @@ contextBridge.exposeInMainWorld('launcher', {
   onError: (cb) => ipcRenderer.on('error', (_e, data) => cb(data)),
   onUpdateChecking: (cb) => ipcRenderer.on('update:checking', () => cb()),
   onUpdateAvailable: (cb) => ipcRenderer.on('update:available', (_e, info) => cb(info)),
-  onUpdateNotAvailable: (cb) => ipcRenderer.on('update:not-available', () => cb()),
+  onUpdateNotAvailable: (cb) => ipcRenderer.on('update:not-available', (_e, info) => cb(info)),
   onUpdateDownloaded: (cb) => ipcRenderer.on('update:downloaded', (_e, info) => cb(info)),
   onUpdateError: (cb) => ipcRenderer.on('update:error', (_e, message) => cb(message)),
   installUpdate: () => ipcRenderer.invoke('update:install-now'),
