@@ -175,6 +175,25 @@ export async function writeModlist(conanExePath: string): Promise<WriteResult> {
   return { ok: true, path: modlistPath }
 }
 
-export function openCollection(): void {
-  shell.openExternal(COLLECTION_URL)
+export interface SubscribeResult {
+  ok: boolean
+  subscribed: number
+  error?: string
+}
+
+export async function subscribeToAll(): Promise<SubscribeResult> {
+  let modIds: string[]
+  try {
+    modIds = await fetchCollectionModIds()
+  } catch (err) {
+    return { ok: false, subscribed: 0, error: `Error al obtener colección: ${(err as Error).message}` }
+  }
+
+  for (const id of modIds) {
+    shell.openExternal(`steam://subscribeitem/${id}`)
+    // Small gap so Steam processes each subscription request cleanly
+    await new Promise(resolve => setTimeout(resolve, 300))
+  }
+
+  return { ok: true, subscribed: modIds.length }
 }

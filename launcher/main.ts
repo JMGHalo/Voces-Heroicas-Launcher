@@ -5,7 +5,7 @@ import { dirname, join } from 'path'
 import { loadLauncherConfig, refreshPaths, saveLauncherConfig } from './launcher-config.js'
 import { ProcessManager } from './process-manager.js'
 import type { ComponentId } from './process-manager.js'
-import { checkMods, writeModlist, openCollection } from './mod-manager.js'
+import { checkMods, writeModlist, subscribeToAll } from './mod-manager.js'
 
 const require = createRequire(import.meta.url)
 
@@ -165,6 +165,6 @@ ipcMain.handle('update:install-now', () => {
 
 ipcMain.handle('mods:check', () => checkMods(currentConfig?.conan.exePath ?? ''))
 
-ipcMain.handle('mods:open-collection', () => { openCollection() })
+ipcMain.handle('mods:subscribe-all', () => subscribeToAll())
 
 ipcMain.handle('mods:write-modlist', () => writeModlist(currentConfig?.conan.exePath ?? ''))

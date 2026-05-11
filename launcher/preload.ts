@@ -24,7 +24,7 @@ contextBridge.exposeInMainWorld('launcher', {
   refreshPaths: () => ipcRenderer.invoke('config:refresh-paths'),
   mods: {
     check: () => ipcRenderer.invoke('mods:check'),
-    openCollection: () => ipcRenderer.invoke('mods:open-collection'),
+    subscribeAll: () => ipcRenderer.invoke('mods:subscribe-all'),
     writeModlist: () => ipcRenderer.invoke('mods:write-modlist'),
   },
 })
