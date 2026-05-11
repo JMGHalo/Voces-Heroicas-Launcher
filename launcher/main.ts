@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, dialog } from 'electron'
 import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
 import { dirname, join } from 'path'
@@ -146,9 +146,31 @@ ipcMain.on('all:stop', () => {
 
 let currentConfig: ReturnType<typeof loadLauncherConfig> | null = null
 
-ipcMain.handle('config:refresh-paths', () => {
+ipcMain.handle('config:refresh-paths', async () => {
   if (!currentConfig) return { ts: '', conan: '' }
   refreshPaths(currentConfig)
+
+  const { existsSync } = await import('fs')
+
+  if (!currentConfig.teamspeak.exePath || !existsSync(currentConfig.teamspeak.exePath)) {
+    const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow!, {
+      title: 'Seleccionar TeamSpeak 3',
+      defaultPath: 'C:\\Program Files\\TeamSpeak 3 Client',
+      filters: [{ name: 'Ejecutables', extensions: ['exe'] }],
+      properties: ['openFile'],
+    })
+    if (!canceled && filePaths[0]) currentConfig.teamspeak.exePath = filePaths[0]
+  }
+
+  if (!currentConfig.conan.exePath || !existsSync(currentConfig.conan.exePath)) {
+    const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow!, {
+      title: 'Seleccionar Conan Exiles',
+      filters: [{ name: 'Ejecutables', extensions: ['exe'] }],
+      properties: ['openFile'],
+    })
+    if (!canceled && filePaths[0]) currentConfig.conan.exePath = filePaths[0]
+  }
+
   saveLauncherConfig(currentConfig)
   return {
     ts: currentConfig.teamspeak.exePath,
