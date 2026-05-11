@@ -1,0 +1,35 @@
+{
+  "name": "voces-heroicas-launcher",
+  "version": "0.1.0",
+  "description": "Launcher y servidor intermedio para servidor de rol Conan Exiles",
+  "author": "JoshPhantom",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/JMGHalo/voces-heroicas-launcher.git"
+  },
+  "type": "module",
+  "main": "dist/launcher/main.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "build": "tsc",
+    "copy-assets": "node -e \"const fs=require('fs');fs.cpSync('launcher/renderer','dist/launcher/renderer',{recursive:true,filter:s=>!s.endsWith('.ts')});fs.mkdirSync('dist/launcher',{recursive:true});fs.copyFileSync('launcher/preload.cjs','dist/launcher/preload.cjs');\"",
+    "launcher:dev": "npm run build && npm run copy-assets && electron dist/launcher/main.js",
+    "launcher:dist": "npm run build && npm run copy-assets && electron-builder",
+    "release": "npm run launcher:dist -- --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.8.3",
+    "fastify": "^4.28.1",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/ws": "^8.5.13",
+    "electron": "^28.3.3",
+    "electron-builder": "^26.8.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

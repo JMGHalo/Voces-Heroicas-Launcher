@@ -1,0 +1,184 @@
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:       #1c1c1e;
+  --card-bg:  #2a2a2d;
+  --border:   #3a3a3d;
+  --text:     #e0e0e0;
+  --muted:    #888;
+  --green:    #4caf50;
+  --yellow:   #ffa500;
+  --red:      #f44336;
+  --gray:     #666;
+  --accent:   #5b8dee;
+}
+
+html, body {
+  width: 520px;
+  height: 420px;
+  overflow: hidden;
+  font-family: "Segoe UI", system-ui, sans-serif;
+  font-size: 13px;
+  background: var(--bg);
+  color: var(--text);
+  user-select: none;
+}
+
+/* ── Update banner ─────────────────────────────────────────────────────────── */
+#update-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 14px;
+  background: #2d3a52;
+  border-bottom: 1px solid #3d5080;
+  font-size: 12px;
+  color: #a8c4f0;
+}
+#update-banner.hidden { display: none; }
+
+#btn-update-install {
+  margin-left: auto;
+  padding: 3px 10px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+}
+#btn-update-install.hidden { display: none; }
+
+/* ── Cards ─────────────────────────────────────────────────────────────────── */
+.cards {
+  padding: 14px 16px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.name {
+  font-weight: 600;
+  font-size: 13px;
+  flex: 1;
+}
+
+.detail {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--muted);
+  padding-left: 21px;
+  min-height: 15px;
+}
+
+/* ── Status dot ────────────────────────────────────────────────────────────── */
+.dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.dot.stopped  { background: var(--gray); }
+.dot.running  { background: var(--green); }
+.dot.error    { background: var(--red); }
+
+.dot.starting {
+  background: transparent;
+  border: 2px solid var(--yellow);
+  border-top-color: transparent;
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ── Action buttons ────────────────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-action {
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #333336;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s;
+}
+.btn-action:hover:not(:disabled) { background: #444447; }
+.btn-action:disabled { opacity: 0.35; cursor: default; }
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+.footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--bg);
+}
+
+.footer button {
+  flex: 1;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: #333336;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.footer button:hover:not(:disabled) { background: #444447; }
+.footer button:disabled { opacity: 0.35; cursor: default; }
+
+#btn-start-all { border-color: #3a5a3a; }
+#btn-start-all:hover:not(:disabled) { background: #2a3e2a; }
+#btn-stop-all  { border-color: #5a3a3a; }
+#btn-stop-all:hover:not(:disabled)  { background: #3e2a2a; }
+
+/* ── Toast ─────────────────────────────────────────────────────────────────── */
+#toast {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #3a1a1a;
+  border: 1px solid var(--red);
+  color: #f8a0a0;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  white-space: nowrap;
+  max-width: 460px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#toast.hidden { display: none; }

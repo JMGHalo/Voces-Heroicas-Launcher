@@ -1,0 +1,8 @@
+node_modules/
+dist/
+build/
+release/
+*.log
+.env
+.env.*
+launcher-config.json

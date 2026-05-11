@@ -1,0 +1,133 @@
+export {} // make this file a module so declare global works
+
+type ComponentStatus = 'stopped' | 'starting' | 'running' | 'error'
+type ComponentId = 'teamspeak' | 'intermediate' | 'conan'
+
+interface ComponentState {
+  status: ComponentStatus
+  detail: string
+}
+
+interface StatusData {
+  teamspeak: ComponentState
+  intermediate: ComponentState
+  conan: ComponentState
+}
+
+declare global {
+  interface Window {
+    launcher: {
+      start: (id: string) => void
+      stop: (id: string) => void
+      restart: (id: string) => void
+      startAll: () => void
+      stopAll: () => void
+      onStatus: (cb: (data: StatusData) => void) => void
+      onError: (cb: (data: { id: string; message: string }) => void) => void
+      onUpdateAvailable: (cb: (info: unknown) => void) => void
+      onUpdateDownloaded: (cb: (info: unknown) => void) => void
+      installUpdate: () => void
+      refreshPaths: () => Promise<{ ts: string; conan: string }>
+    }
+  }
+}
+
+// ── DOM helpers ───────────────────────────────────────────────────────────────
+
+function el<T extends HTMLElement>(id: string): T {
+  return document.getElementById(id) as T
+}
+
+function updateCard(id: ComponentId, state: ComponentState): void {
+  const dot    = el(`dot-${id}`)
+  const detail = el(`detail-${id}`)
+
+  dot.className = `dot ${state.status}`
+  detail.textContent = state.detail
+
+  const start   = document.querySelector<HTMLButtonElement>(`.btn-start[data-id="${id}"]`)
+  const restart = document.querySelector<HTMLButtonElement>(`.btn-restart[data-id="${id}"]`)
+  const stop    = document.querySelector<HTMLButtonElement>(`.btn-stop[data-id="${id}"]`)
+
+  if (start)   start.disabled   = state.status === 'starting' || state.status === 'running'
+  if (restart) restart.disabled = state.status === 'starting' || state.status === 'stopped'
+  if (stop)    stop.disabled    = state.status === 'starting' || state.status === 'stopped'
+}
+
+let toastTimer: ReturnType<typeof setTimeout> | null = null
+
+function showToast(message: string): void {
+  const toast = el('toast')
+  toast.textContent = message
+  toast.classList.remove('hidden')
+  if (toastTimer) clearTimeout(toastTimer)
+  toastTimer = setTimeout(() => toast.classList.add('hidden'), 5000)
+}
+
+// ── Wire up status updates ────────────────────────────────────────────────────
+
+window.launcher.onStatus((data: StatusData) => {
+  updateCard('teamspeak', data.teamspeak)
+  updateCard('intermediate', data.intermediate)
+  updateCard('conan', data.conan)
+})
+
+window.launcher.onError((data) => {
+  const prefix = data.id === 'all' ? '' : `[${data.id}] `
+  showToast(`${prefix}${data.message}`)
+})
+
+// ── Update banner ─────────────────────────────────────────────────────────────
+
+window.launcher.onUpdateAvailable(() => {
+  const banner = el('update-banner')
+  el('update-message').textContent = 'Hay una actualización disponible — Descargando…'
+  banner.classList.remove('hidden')
+})
+
+window.launcher.onUpdateDownloaded(() => {
+  el('update-message').textContent = 'Actualización lista'
+  const btn = el<HTMLButtonElement>('btn-update-install')
+  btn.classList.remove('hidden')
+})
+
+el<HTMLButtonElement>('btn-update-install').addEventListener('click', () => {
+  window.launcher.installUpdate()
+})
+
+// ── Per-component buttons ─────────────────────────────────────────────────────
+
+document.querySelectorAll<HTMLButtonElement>('.btn-start').forEach(btn => {
+  btn.addEventListener('click', () => window.launcher.start(btn.dataset.id!))
+})
+
+document.querySelectorAll<HTMLButtonElement>('.btn-restart').forEach(btn => {
+  btn.addEventListener('click', () => window.launcher.restart(btn.dataset.id!))
+})
+
+document.querySelectorAll<HTMLButtonElement>('.btn-stop').forEach(btn => {
+  btn.addEventListener('click', () => window.launcher.stop(btn.dataset.id!))
+})
+
+// ── Global buttons ────────────────────────────────────────────────────────────
+
+el<HTMLButtonElement>('btn-start-all').addEventListener('click', () => {
+  window.launcher.startAll()
+})
+
+el<HTMLButtonElement>('btn-stop-all').addEventListener('click', () => {
+  window.launcher.stopAll()
+})
+
+el<HTMLButtonElement>('btn-refresh-paths').addEventListener('click', async () => {
+  const btn = el<HTMLButtonElement>('btn-refresh-paths')
+  btn.disabled = true
+  try {
+    const result = await window.launcher.refreshPaths()
+    const ts = result.ts || '(no detectado)'
+    const conan = result.conan || '(no detectado)'
+    showToast(`Rutas actualizadas — TS3: ${ts} · Conan: ${conan}`)
+  } finally {
+    btn.disabled = false
+  }
+})

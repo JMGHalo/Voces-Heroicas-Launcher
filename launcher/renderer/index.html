@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self'; script-src 'self'; style-src 'self'">
+  <title>Voces Heroicas Launcher</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="update-banner" class="hidden">
+    <span id="update-message"></span>
+    <button id="btn-update-install" class="hidden">Reiniciar ahora</button>
+  </div>
+
+  <div class="cards">
+    <!-- TeamSpeak 3 -->
+    <div class="card">
+      <div class="card-header">
+        <span class="dot stopped" id="dot-teamspeak"></span>
+        <span class="name">TeamSpeak 3</span>
+        <div class="actions">
+          <button class="btn-action btn-start" data-id="teamspeak" title="Iniciar">&#9654;</button>
+        </div>
+      </div>
+      <div class="detail" id="detail-teamspeak">No iniciado</div>
+    </div>
+
+    <!-- VH Bridge -->
+    <div class="card">
+      <div class="card-header">
+        <span class="dot stopped" id="dot-intermediate"></span>
+        <span class="name">VH Bridge</span>
+        <div class="actions">
+          <button class="btn-action btn-start"   data-id="intermediate" title="Iniciar">&#9654;</button>
+          <button class="btn-action btn-restart" data-id="intermediate" title="Reiniciar" disabled>&#10227;</button>
+          <button class="btn-action btn-stop"    data-id="intermediate" title="Parar" disabled>&#9632;</button>
+        </div>
+      </div>
+      <div class="detail" id="detail-intermediate">No iniciado</div>
+    </div>
+
+    <!-- Conan Exiles -->
+    <div class="card">
+      <div class="card-header">
+        <span class="dot stopped" id="dot-conan"></span>
+        <span class="name">Conan Exiles</span>
+        <div class="actions">
+          <button class="btn-action btn-start"   data-id="conan" title="Iniciar">&#9654;</button>
+          <button class="btn-action btn-restart" data-id="conan" title="Reiniciar" disabled>&#10227;</button>
+          <button class="btn-action btn-stop"    data-id="conan" title="Parar" disabled>&#9632;</button>
+        </div>
+      </div>
+      <div class="detail" id="detail-conan">No iniciado</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <button id="btn-start-all">Iniciar todo</button>
+    <button id="btn-stop-all">Parar todo</button>
+    <button id="btn-refresh-paths" title="Volver a detectar rutas de TeamSpeak y Conan">&#8635; Rutas</button>
+  </div>
+
+  <div id="toast" class="hidden"></div>
+
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>
