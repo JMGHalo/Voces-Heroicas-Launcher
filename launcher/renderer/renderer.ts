@@ -39,7 +39,9 @@ declare global {
       stopAll: () => void
       onStatus: (cb: (data: StatusData) => void) => void
       onError: (cb: (data: { id: string; message: string }) => void) => void
+      onUpdateChecking: (cb: () => void) => void
       onUpdateAvailable: (cb: (info: unknown) => void) => void
+      onUpdateNotAvailable: (cb: () => void) => void
       onUpdateDownloaded: (cb: (info: unknown) => void) => void
       onUpdateError: (cb: (message: string) => void) => void
       installUpdate: () => void
@@ -100,10 +102,18 @@ window.launcher.onError((data) => {
 
 // ── Update banner ─────────────────────────────────────────────────────────────
 
+window.launcher.onUpdateChecking(() => {
+  showToast('Buscando actualizaciones…')
+})
+
 window.launcher.onUpdateAvailable(() => {
   const banner = el('update-banner')
   el('update-message').textContent = 'Hay una actualización disponible — Descargando…'
   banner.classList.remove('hidden')
+})
+
+window.launcher.onUpdateNotAvailable(() => {
+  showToast('El launcher está actualizado')
 })
 
 window.launcher.onUpdateError((message) => {

@@ -10,8 +10,12 @@ contextBridge.exposeInMainWorld('launcher', {
     ipcRenderer.on('status-update', (_e, data) => cb(data)),
   onError: (cb: (data: unknown) => void) =>
     ipcRenderer.on('error', (_e, data) => cb(data)),
+  onUpdateChecking: (cb: () => void) =>
+    ipcRenderer.on('update:checking', () => cb()),
   onUpdateAvailable: (cb: (info: unknown) => void) =>
     ipcRenderer.on('update:available', (_e, info) => cb(info)),
+  onUpdateNotAvailable: (cb: () => void) =>
+    ipcRenderer.on('update:not-available', () => cb()),
   onUpdateDownloaded: (cb: (info: unknown) => void) =>
     ipcRenderer.on('update:downloaded', (_e, info) => cb(info)),
   onUpdateError: (cb: (message: string) => void) =>

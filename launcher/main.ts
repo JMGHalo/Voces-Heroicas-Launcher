@@ -40,6 +40,13 @@ function createWindow(config: ReturnType<typeof loadLauncherConfig>): void {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   }
 
+  // Start update check only after the renderer is fully loaded so IPC messages are not lost
+  mainWindow.webContents.once('did-finish-load', () => {
+    if (app.isPackaged && config.updates.checkOnLaunch) {
+      runUpdateCheck()
+    }
+  })
+
   statusInterval = setInterval(() => {
     if (mainWindow && !mainWindow.isDestroyed() && processManager) {
       mainWindow.webContents.send('status-update', processManager.getStatus())
@@ -55,6 +62,33 @@ function createWindow(config: ReturnType<typeof loadLauncherConfig>): void {
   })
 }
 
+// Clear any GitHub tokens before importing electron-updater — an invalid
+// GH_TOKEN in the environment causes a silent 401 on public repos.
+delete process.env.GH_TOKEN
+delete process.env.GITHUB_TOKEN
+
+function runUpdateCheck(): void {
+  import('electron-updater').then(({ autoUpdater }) => {
+    autoUpdater.autoDownload = true
+    autoUpdater.autoInstallOnAppQuit = true
+
+    autoUpdater.on('checking-for-update', () =>
+      mainWindow?.webContents.send('update:checking'))
+    autoUpdater.on('update-available', info =>
+      mainWindow?.webContents.send('update:available', info))
+    autoUpdater.on('update-not-available', () =>
+      mainWindow?.webContents.send('update:not-available'))
+    autoUpdater.on('update-downloaded', info =>
+      mainWindow?.webContents.send('update:downloaded', info))
+    autoUpdater.on('error', err =>
+      mainWindow?.webContents.send('update:error', err.message))
+
+    autoUpdater.checkForUpdates().catch(err =>
+      mainWindow?.webContents.send('update:error', (err as Error).message))
+  }).catch(err =>
+    mainWindow?.webContents.send('update:error', (err as Error).message))
+}
+
 app.whenReady().then(() => {
   // Set VOCES_APP_ROOT so the intermediate app finds config.json
   process.env.VOCES_APP_ROOT = app.isPackaged ? process.resourcesPath : app.getAppPath()
@@ -63,29 +97,6 @@ app.whenReady().then(() => {
   currentConfig = config
   createWindow(config)
   processManager?.initAll().catch(() => {})
-
-  // Auto-update — only active when packaged, silently skipped in dev
-  if (app.isPackaged && config.updates.checkOnLaunch) {
-    import('electron-updater').then(({ autoUpdater }) => {
-      // GH_TOKEN in the environment breaks the updater on public repos —
-      // electron-updater tries to authenticate with it and gets a 401.
-      delete process.env.GH_TOKEN
-      delete process.env.GITHUB_TOKEN
-
-      autoUpdater.autoDownload = true
-      autoUpdater.autoInstallOnAppQuit = true
-
-      autoUpdater.on('update-available', info =>
-        mainWindow?.webContents.send('update:available', info))
-      autoUpdater.on('update-downloaded', info =>
-        mainWindow?.webContents.send('update:downloaded', info))
-      autoUpdater.on('error', err =>
-        mainWindow?.webContents.send('update:error', err.message))
-
-      autoUpdater.checkForUpdates().catch(err =>
-        mainWindow?.webContents.send('update:error', (err as Error).message))
-    }).catch(() => {})
-  }
 })
 
 app.on('window-all-closed', () => { app.quit() })
