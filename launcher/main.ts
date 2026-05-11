@@ -1,4 +1,4 @@
-import { app, BrowserWindow, ipcMain, Menu, dialog } from 'electron'
+import { app, BrowserWindow, ipcMain, Menu, dialog, shell } from 'electron'
 import { fileURLToPath } from 'url'
 import { createRequire } from 'module'
 import { dirname, join } from 'path'
@@ -180,6 +180,12 @@ async function ensurePaths(): Promise<{ ts: string; conan: string }> {
 }
 
 ipcMain.handle('config:refresh-paths', () => ensurePaths())
+
+ipcMain.handle('tools:install-ts3', () =>
+  shell.openExternal('https://www.teamspeak.com/en/downloads/#ts3client'))
+
+ipcMain.handle('tools:install-saltychat', () =>
+  shell.openExternal('https://saltyhub.net/saltychat'))
 
 ipcMain.handle('update:install-now', () => {
   try {

@@ -16,6 +16,10 @@ contextBridge.exposeInMainWorld('launcher', {
   onUpdateError: (cb) => ipcRenderer.on('update:error', (_e, message) => cb(message)),
   installUpdate: () => ipcRenderer.invoke('update:install-now'),
   refreshPaths: () => ipcRenderer.invoke('config:refresh-paths'),
+  tools: {
+    installTs3: () => ipcRenderer.invoke('tools:install-ts3'),
+    installSaltychat: () => ipcRenderer.invoke('tools:install-saltychat'),
+  },
   mods: {
     check: () => ipcRenderer.invoke('mods:check'),
     subscribeAll: () => ipcRenderer.invoke('mods:subscribe-all'),

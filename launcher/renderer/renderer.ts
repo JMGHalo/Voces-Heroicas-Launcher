@@ -46,6 +46,10 @@ declare global {
       onUpdateError: (cb: (message: string) => void) => void
       installUpdate: () => void
       refreshPaths: () => Promise<{ ts: string; conan: string }>
+      tools: {
+        installTs3: () => Promise<void>
+        installSaltychat: () => Promise<void>
+      }
       mods: {
         check: () => Promise<ModCheckResult>
         subscribeAll: () => Promise<void>
@@ -166,6 +170,16 @@ el<HTMLButtonElement>('btn-refresh-paths').addEventListener('click', async () =>
   } finally {
     btn.disabled = false
   }
+})
+
+// ── Install helpers ───────────────────────────────────────────────────────────
+
+el<HTMLButtonElement>('btn-install-ts3').addEventListener('click', () => {
+  window.launcher.tools.installTs3()
+})
+
+el<HTMLButtonElement>('btn-install-saltychat').addEventListener('click', () => {
+  window.launcher.tools.installSaltychat()
 })
 
 // ── Mod management ────────────────────────────────────────────────────────────
