@@ -68,25 +68,28 @@ delete process.env.GH_TOKEN
 delete process.env.GITHUB_TOKEN
 
 function runUpdateCheck(): void {
-  import('electron-updater').then(({ autoUpdater }) => {
+  // electron-updater is CJS; with ESM dynamic import the exports land on .default
+  import('electron-updater').then((mod: any) => {
+    const autoUpdater = mod.autoUpdater ?? mod.default?.autoUpdater ?? mod.default
+
     autoUpdater.autoDownload = true
     autoUpdater.autoInstallOnAppQuit = true
 
     autoUpdater.on('checking-for-update', () =>
       mainWindow?.webContents.send('update:checking'))
-    autoUpdater.on('update-available', info =>
+    autoUpdater.on('update-available', (info: unknown) =>
       mainWindow?.webContents.send('update:available', info))
     autoUpdater.on('update-not-available', () =>
       mainWindow?.webContents.send('update:not-available'))
-    autoUpdater.on('update-downloaded', info =>
+    autoUpdater.on('update-downloaded', (info: unknown) =>
       mainWindow?.webContents.send('update:downloaded', info))
-    autoUpdater.on('error', err =>
+    autoUpdater.on('error', (err: Error) =>
       mainWindow?.webContents.send('update:error', err.message))
 
-    autoUpdater.checkForUpdates().catch(err =>
-      mainWindow?.webContents.send('update:error', (err as Error).message))
-  }).catch(err =>
-    mainWindow?.webContents.send('update:error', (err as Error).message))
+    autoUpdater.checkForUpdates().catch((err: Error) =>
+      mainWindow?.webContents.send('update:error', err.message))
+  }).catch((err: Error) =>
+    mainWindow?.webContents.send('update:error', err.message))
 }
 
 app.whenReady().then(() => {
@@ -147,7 +150,8 @@ ipcMain.handle('config:refresh-paths', () => {
 })
 
 ipcMain.handle('update:install-now', () => {
-  import('electron-updater').then(({ autoUpdater }) => {
+  import('electron-updater').then((mod: any) => {
+    const autoUpdater = mod.autoUpdater ?? mod.default?.autoUpdater ?? mod.default
     autoUpdater.quitAndInstall()
   }).catch(() => {})
 })
