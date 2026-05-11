@@ -48,7 +48,7 @@ declare global {
       refreshPaths: () => Promise<{ ts: string; conan: string }>
       mods: {
         check: () => Promise<ModCheckResult>
-        subscribeAll: () => Promise<{ ok: boolean; subscribed: number; error?: string }>
+        subscribeAll: () => Promise<void>
         writeModlist: () => Promise<ModWriteResult>
       }
     }
@@ -200,19 +200,9 @@ async function refreshModStatus(): Promise<void> {
 el<HTMLButtonElement>('btn-subscribe-mods').addEventListener('click', async () => {
   const btn = el<HTMLButtonElement>('btn-subscribe-mods')
   btn.disabled = true
-  const detail = el('detail-mods')
-  const prev = detail.textContent
-  detail.textContent = 'Suscribiendo a los mods…'
   try {
-    const r = await window.launcher.mods.subscribeAll()
-    if (r.ok) {
-      showToast(`Suscrito a ${r.subscribed} mods — Steam está descargando`)
-    } else {
-      showToast(`Error: ${r.error}`)
-    }
-    await refreshModStatus()
-  } catch {
-    detail.textContent = prev
+    await window.launcher.mods.subscribeAll()
+    showToast('Abriendo colección en Steam — haz clic en "Suscribirse a todos"')
   } finally {
     btn.disabled = false
   }
