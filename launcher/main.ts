@@ -43,8 +43,9 @@ function createWindow(config: ReturnType<typeof loadLauncherConfig>): void {
     mainWindow.webContents.openDevTools({ mode: 'detach' })
   }
 
-  // Start update check only after the renderer is fully loaded so IPC messages are not lost
+  // Start update check and path verification after renderer is fully loaded
   mainWindow.webContents.once('did-finish-load', () => {
+    ensurePaths().catch(() => {})
     if (app.isPackaged && config.updates.checkOnLaunch) {
       runUpdateCheck()
     }
@@ -146,11 +147,11 @@ ipcMain.on('all:stop', () => {
 
 let currentConfig: ReturnType<typeof loadLauncherConfig> | null = null
 
-ipcMain.handle('config:refresh-paths', async () => {
+import { existsSync } from 'fs'
+
+async function ensurePaths(): Promise<{ ts: string; conan: string }> {
   if (!currentConfig) return { ts: '', conan: '' }
   refreshPaths(currentConfig)
-
-  const { existsSync } = await import('fs')
 
   if (!currentConfig.teamspeak.exePath || !existsSync(currentConfig.teamspeak.exePath)) {
     const { filePaths, canceled } = await dialog.showOpenDialog(mainWindow!, {
@@ -176,7 +177,9 @@ ipcMain.handle('config:refresh-paths', async () => {
     ts: currentConfig.teamspeak.exePath,
     conan: currentConfig.conan.exePath,
   }
-})
+}
+
+ipcMain.handle('config:refresh-paths', () => ensurePaths())
 
 ipcMain.handle('update:install-now', () => {
   try {
