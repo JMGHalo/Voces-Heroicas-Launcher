@@ -14,6 +14,21 @@ interface StatusData {
   conan: ComponentState
 }
 
+interface ModCheckResult {
+  conanFound: boolean
+  missing: string[]
+  modlistExists: boolean
+  modlistPath: string
+  error?: string
+}
+
+interface ModWriteResult {
+  ok: boolean
+  path?: string
+  error?: string
+  missing?: string[]
+}
+
 declare global {
   interface Window {
     launcher: {
@@ -28,6 +43,11 @@ declare global {
       onUpdateDownloaded: (cb: (info: unknown) => void) => void
       installUpdate: () => void
       refreshPaths: () => Promise<{ ts: string; conan: string }>
+      mods: {
+        check: () => Promise<ModCheckResult>
+        openCollection: () => Promise<void>
+        writeModlist: () => Promise<ModWriteResult>
+      }
     }
   }
 }
@@ -127,7 +147,60 @@ el<HTMLButtonElement>('btn-refresh-paths').addEventListener('click', async () =>
     const ts = result.ts || '(no detectado)'
     const conan = result.conan || '(no detectado)'
     showToast(`Rutas actualizadas — TS3: ${ts} · Conan: ${conan}`)
+    await refreshModStatus()
   } finally {
     btn.disabled = false
   }
 })
+
+// ── Mod management ────────────────────────────────────────────────────────────
+
+async function refreshModStatus(): Promise<void> {
+  const dot    = el('dot-mods')
+  const detail = el('detail-mods')
+  try {
+    const r = await window.launcher.mods.check()
+    if (!r.conanFound) {
+      dot.className = 'dot stopped'
+      detail.textContent = 'Conan Exiles no detectado — usa ↺ Rutas'
+    } else if (r.error) {
+      dot.className = 'dot error'
+      detail.textContent = r.error
+    } else if (r.missing.length > 0) {
+      dot.className = 'dot error'
+      detail.textContent = `Faltan ${r.missing.length} mod(s) — suscríbete a la colección primero`
+    } else if (r.modlistExists) {
+      dot.className = 'dot running'
+      detail.textContent = 'modlist.txt activo'
+    } else {
+      dot.className = 'dot stopped'
+      detail.textContent = 'Mods descargados — haz clic en "Aplicar mods"'
+    }
+  } catch {
+    dot.className = 'dot error'
+    detail.textContent = 'Error al verificar mods'
+  }
+}
+
+el<HTMLButtonElement>('btn-subscribe-mods').addEventListener('click', () => {
+  window.launcher.mods.openCollection()
+  showToast('Abriendo colección de mods en el navegador…')
+})
+
+el<HTMLButtonElement>('btn-write-modlist').addEventListener('click', async () => {
+  const btn = el<HTMLButtonElement>('btn-write-modlist')
+  btn.disabled = true
+  try {
+    const r = await window.launcher.mods.writeModlist()
+    if (r.ok) {
+      showToast('modlist.txt escrito correctamente')
+    } else {
+      showToast(`Error: ${r.error}`)
+    }
+    await refreshModStatus()
+  } finally {
+    btn.disabled = false
+  }
+})
+
+refreshModStatus()

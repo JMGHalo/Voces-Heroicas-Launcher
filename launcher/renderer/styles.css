@@ -130,6 +130,28 @@ html, body {
 .btn-action:hover:not(:disabled) { background: #444447; }
 .btn-action:disabled { opacity: 0.35; cursor: default; }
 
+/* ── Mod card buttons ──────────────────────────────────────────────────────── */
+.btn-mod {
+  height: 26px;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: #333336;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 11px;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.btn-mod:hover:not(:disabled) { background: #444447; }
+.btn-mod:disabled { opacity: 0.35; cursor: default; }
+
+.btn-mod-primary {
+  background: #2a3e5a;
+  border-color: #3a5a80;
+}
+.btn-mod-primary:hover:not(:disabled) { background: #344d70; }
+
 /* ── Footer ────────────────────────────────────────────────────────────────── */
 .footer {
   position: absolute;

@@ -15,4 +15,10 @@ contextBridge.exposeInMainWorld('launcher', {
   onUpdateDownloaded: (cb: (info: unknown) => void) =>
     ipcRenderer.on('update:downloaded', (_e, info) => cb(info)),
   installUpdate: () => ipcRenderer.invoke('update:install-now'),
+  refreshPaths: () => ipcRenderer.invoke('config:refresh-paths'),
+  mods: {
+    check: () => ipcRenderer.invoke('mods:check'),
+    openCollection: () => ipcRenderer.invoke('mods:open-collection'),
+    writeModlist: () => ipcRenderer.invoke('mods:write-modlist'),
+  },
 })
