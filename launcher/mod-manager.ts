@@ -190,9 +190,9 @@ export async function subscribeToAll(): Promise<SubscribeResult> {
   }
 
   for (const id of modIds) {
-    shell.openExternal(`steam://subscribeitem/${id}`)
-    // Small gap so Steam processes each subscription request cleanly
-    await new Promise(resolve => setTimeout(resolve, 300))
+    await shell.openExternal(`steam://subscribeitem/${id}`)
+    // Give Steam enough time to process each subscription before the next
+    await new Promise(resolve => setTimeout(resolve, 1000))
   }
 
   return { ok: true, subscribed: modIds.length }
