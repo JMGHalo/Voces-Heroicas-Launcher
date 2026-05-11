@@ -64,12 +64,16 @@ app.whenReady().then(() => {
   createWindow(config)
   processManager?.initAll().catch(() => {})
 
-  // Auto-update (L8) — only active when packaged, silently fails in dev
+  // Auto-update — only active when packaged, silently skipped in dev
   if (app.isPackaged && config.updates.checkOnLaunch) {
     import('electron-updater').then(({ autoUpdater }) => {
+      // GH_TOKEN in the environment breaks the updater on public repos —
+      // electron-updater tries to authenticate with it and gets a 401.
+      delete process.env.GH_TOKEN
+      delete process.env.GITHUB_TOKEN
+
       autoUpdater.autoDownload = true
       autoUpdater.autoInstallOnAppQuit = true
-      autoUpdater.checkForUpdates().catch(() => {})
 
       autoUpdater.on('update-available', info =>
         mainWindow?.webContents.send('update:available', info))
@@ -77,6 +81,9 @@ app.whenReady().then(() => {
         mainWindow?.webContents.send('update:downloaded', info))
       autoUpdater.on('error', err =>
         mainWindow?.webContents.send('update:error', err.message))
+
+      autoUpdater.checkForUpdates().catch(err =>
+        mainWindow?.webContents.send('update:error', (err as Error).message))
     }).catch(() => {})
   }
 })

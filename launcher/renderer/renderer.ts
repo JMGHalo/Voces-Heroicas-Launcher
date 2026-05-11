@@ -41,6 +41,7 @@ declare global {
       onError: (cb: (data: { id: string; message: string }) => void) => void
       onUpdateAvailable: (cb: (info: unknown) => void) => void
       onUpdateDownloaded: (cb: (info: unknown) => void) => void
+      onUpdateError: (cb: (message: string) => void) => void
       installUpdate: () => void
       refreshPaths: () => Promise<{ ts: string; conan: string }>
       mods: {
@@ -103,6 +104,10 @@ window.launcher.onUpdateAvailable(() => {
   const banner = el('update-banner')
   el('update-message').textContent = 'Hay una actualización disponible — Descargando…'
   banner.classList.remove('hidden')
+})
+
+window.launcher.onUpdateError((message) => {
+  showToast(`Error de actualización: ${message}`)
 })
 
 window.launcher.onUpdateDownloaded(() => {
