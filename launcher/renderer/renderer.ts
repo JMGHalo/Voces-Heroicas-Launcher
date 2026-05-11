@@ -208,6 +208,16 @@ el<HTMLButtonElement>('btn-subscribe-mods').addEventListener('click', async () =
   }
 })
 
+el<HTMLButtonElement>('btn-check-mods').addEventListener('click', async () => {
+  const btn = el<HTMLButtonElement>('btn-check-mods')
+  btn.disabled = true
+  try {
+    await refreshModStatus()
+  } finally {
+    btn.disabled = false
+  }
+})
+
 el<HTMLButtonElement>('btn-write-modlist').addEventListener('click', async () => {
   const btn = el<HTMLButtonElement>('btn-write-modlist')
   btn.disabled = true
