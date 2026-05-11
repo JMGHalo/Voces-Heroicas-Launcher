@@ -1,5 +1,6 @@
 import { EventEmitter } from 'events'
 import { execFile, execSync, spawn } from 'child_process'
+import { existsSync } from 'fs'
 import { createConnection } from 'net'
 import type { LauncherConfig } from './launcher-config.js'
 import { buildTs3Url } from './launcher-config.js'
@@ -254,14 +255,32 @@ export class ConanProcess extends EventEmitter {
     this.clearPoll()
 
     const exePath = this.config.conan.exePath
-    const useDirect = exePath.length > 0
+    const battleEye = this.config.conan.battleEye
+
+    // Determine what to actually launch
+    let launchPath = exePath
+    let useDirect = exePath.length > 0
+
+    if (useDirect && battleEye) {
+      // ConanSandbox_BE.exe lives next to ConanSandbox-Win64-Shipping.exe and is
+      // the wrapper Steam uses when BattleEye is active. Use it so BE servers
+      // accept the connection; fall back to Steam URL if the file isn't present.
+      const SHIPPING = /ConanSandbox-Win64-Shipping\.exe$/i
+      if (SHIPPING.test(exePath)) {
+        const bePath = exePath.replace(SHIPPING, 'ConanSandbox_BE.exe')
+        if (existsSync(bePath)) {
+          launchPath = bePath
+        } else {
+          useDirect = false
+        }
+      }
+    }
 
     this.setState('starting', useDirect ? 'Iniciando Conan…' : 'Iniciando vía Steam…')
 
     try {
       if (useDirect) {
-        // Launch the game exe directly, skipping the Funcom launcher
-        execSync(`cmd.exe /c start "" "${exePath}"`, { timeout: 5000 })
+        execSync(`cmd.exe /c start "" "${launchPath}"`, { timeout: 5000 })
       } else {
         execSync(`cmd.exe /c "start steam://rungameid/${this.config.conan.steamAppId}"`, {
           timeout: 5000,

@@ -19,6 +19,7 @@ export interface LauncherConfig {
   conan: {
     steamAppId: string
     exePath: string   // direct exe path; empty = fall back to Steam URL
+    battleEye: boolean
   }
   intermediate: {
     autoStart: boolean
@@ -114,7 +115,7 @@ function makeDefaults(): LauncherConfig {
         channelPassword: '',
       },
     },
-    conan: { steamAppId: '440900', exePath: detectConanPath() },
+    conan: { steamAppId: '440900', exePath: detectConanPath(), battleEye: true },
     intermediate: { autoStart: true },
     ui: { startAllOnLaunch: false, stopAllOnClose: true },
     updates: { checkOnLaunch: true, channel: 'stable' },
@@ -150,6 +151,7 @@ export function loadLauncherConfig(): LauncherConfig {
           ...(raw.teamspeak?.autoConnect ?? {}),
         },
       },
+      conan: { ...defaults.conan, ...(raw.conan ?? {}) },
       ui: { ...defaults.ui, ...(raw.ui ?? {}) },
       updates: { ...defaults.updates, ...(raw.updates ?? {}) },
     }
