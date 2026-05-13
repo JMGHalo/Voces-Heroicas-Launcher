@@ -2,6 +2,7 @@ import { fileURLToPath } from 'url'
 import { loadConfig, type AppConfig } from './config.js'
 import { log, setLogLevel } from './logger.js'
 import { SaltyChatClient } from './saltychat/client.js'
+import { detectSaltyChatUrl } from './saltychat/detect.js'
 import { PlayerRegistry } from './state/player-registry.js'
 import { SessionState } from './state/session.js'
 import { createHttpServer } from './http-server.js'
@@ -21,13 +22,13 @@ export async function createApp(_config?: Partial<AppConfig>): Promise<AppHandle
   const session = new SessionState()
 
   const saltyChat = new SaltyChatClient({
-    wsUrl: config.saltyChatWsUrl,
+    wsUrl: detectSaltyChatUrl(),
     serverUniqueIdentifier: config.serverUniqueIdentifier,
   })
 
   const registry = new PlayerRegistry((name) => {
     log('registry', `Auto-cull: ${name}`)
-    saltyChat.removePlayer(name)
+    if (name !== session.playerName) saltyChat.removePlayer(name)
   })
 
   saltyChat.on('instance-state', (msg: InstanceStateMsg) => {
@@ -35,9 +36,20 @@ export async function createApp(_config?: Partial<AppConfig>): Promise<AppHandle
   })
 
   saltyChat.on('reset', () => {
+    const initParams = session.lastInitParams
+    const suid = session.serverUniqueIdentifier  // preserved across reset()
     session.reset()
     registry.clear()
     log('session', 'Reset recibido — sesión limpiada')
+
+    if (initParams) {
+      log('session', `Re-iniciando sesión para ${initParams.Name}...`)
+      // Restore the SUID on the client so all outgoing messages keep using the right one
+      if (suid) saltyChat.config.serverUniqueIdentifier = suid
+      session.playerName = initParams.Name
+      session.initiated = true
+      saltyChat.initiate(initParams)
+    }
   })
 
   const http = createHttpServer(config, saltyChat, session, registry)

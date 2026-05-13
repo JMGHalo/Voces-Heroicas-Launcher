@@ -17,7 +17,9 @@
     "copy-assets": "node -e \"const fs=require('fs');fs.cpSync('launcher/renderer','dist/launcher/renderer',{recursive:true,filter:s=>!s.endsWith('.ts')});fs.mkdirSync('dist/launcher',{recursive:true});fs.copyFileSync('launcher/preload.cjs','dist/launcher/preload.cjs');\"",
     "launcher:dev": "npm run build && npm run copy-assets && electron dist/launcher/main.js",
     "launcher:dist": "npm run build && npm run copy-assets && electron-builder",
-    "release": "npm run launcher:dist -- --publish always"
+    "release": "npm run launcher:dist -- --publish always",
+    "test:ws": "tsx test/ws-test-server.ts",
+    "test:http": "tsx test/http-test-server.ts"
   },
   "dependencies": {
     "electron-updater": "^6.8.3",

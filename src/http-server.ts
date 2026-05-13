@@ -4,6 +4,7 @@ import type { SaltyChatClient } from './saltychat/client.js'
 import type { PlayerRegistry } from './state/player-registry.js'
 import type { SessionState } from './state/session.js'
 import type { AppConfig } from './config.js'
+import type { PlayerState, SelfState } from './saltychat/types.js'
 
 const NUM_PATTERN = '^-?[0-9]+(\\.[0-9]+)?$'
 
@@ -24,6 +25,7 @@ interface InitQuery   { name: string; serverId: string; channelId: string; chann
 interface SelfQuery   { x: string; y: string; z: string; yaw: string; range: string; alive: string }
 interface PlayerQuery { id: string; x: string; y: string; z: string; yaw: string; range: string; alive: string }
 interface RemoveQuery { id: string }
+interface BulkQuery  { data?: string }
 
 export function createHttpServer(
   config: AppConfig,
@@ -52,13 +54,17 @@ export function createHttpServer(
     },
   }, async (req, reply) => {
     const { name, serverId, channelId, channelPwd } = req.query
-    session.playerName = name
-    session.initiated = true
-    log('http', `→ Initiate name=${name} serverId=${serverId} channelId=${channelId}`)
-    saltyChat.initiate({
+
+    // Store the Blueprint-provided SUID in both the session and the client so every
+    // subsequent message (SelfStateUpdate, PlayerStateUpdate, Pong, …) carries the
+    // correct identifier — mismatch here is what caused the 6-second InstanceTimeout loop.
+    session.serverUniqueIdentifier = serverId
+    saltyChat.config.serverUniqueIdentifier = serverId
+
+    const initParams = {
       Name: name,
       ServerUniqueIdentifier: serverId,
-      ChannelId: channelId,
+      ChannelId: parseInt(channelId, 10),
       ChannelPassword: channelPwd,
       SoundPack: 'default',
       SwissChannelIds: [],
@@ -67,7 +73,12 @@ export function createHttpServer(
       UltraShortRangeDistance: config.voiceRanges.ultraShort,
       ShortRangeDistance: config.voiceRanges.short,
       LongRangeDistance: config.voiceRanges.long,
-    })
+    }
+    session.playerName = name
+    session.initiated = true
+    session.lastInitParams = initParams
+    log('http', `→ Initiate name=${name} serverId=${serverId} channelId=${channelId}`)
+    saltyChat.initiate(initParams)
     return reply.code(200).send({ ok: true })
   })
 
@@ -157,6 +168,55 @@ export function createHttpServer(
     return reply.code(200).send({ ok: true })
   })
 
+  // ── /bulk ──────────────────────────────────────────────────────────────────
+  fastify.get<{ Querystring: BulkQuery }>('/bulk', {
+    schema: {
+      querystring: {
+        type: 'object',
+        properties: {
+          data: { type: 'string' },
+        },
+      },
+    },
+  }, async (req, reply) => {
+    const raw = (req.query.data ?? '').trim()
+    if (!raw) return reply.code(200).send({ ok: true, count: 0 })
+
+    const playerStates: PlayerState[] = []
+    let selfState: SelfState | null = null
+
+    for (const entry of raw.split('|')) {
+      if (!entry) continue
+      const parts = entry.split(',')
+      if (parts.length < 6) continue
+
+      const [id, x, y, z, yaw, range] = parts
+      const px = uu(x), py = uu(y), pz = uu(z)
+      const rot = parseFloat(yaw)
+      const vr = parseFloat(range)
+
+      if (!id || [px, py, pz, rot, vr].some(isNaN)) continue
+
+      const pos = { X: px, Y: py, Z: pz }
+
+      const state: PlayerState = { Name: id, Position: pos, Rotation: rot, VoiceRange: vr, IsAlive: true }
+      registry.update(state)
+
+      if (session.initiated && id === session.playerName) {
+        selfState = { Position: pos, Rotation: rot, VoiceRange: vr, IsAlive: true }
+      } else {
+        playerStates.push(state)
+      }
+    }
+
+    if (selfState) saltyChat.updateSelf(selfState)
+    for (const s of playerStates) saltyChat.updatePlayer(s)
+
+    const count = playerStates.length + (selfState ? 1 : 0)
+    log('http', `→ Bulk ${count} players (self=${!!selfState})`)
+    return reply.code(200).send({ ok: true, count })
+  })
+
   // ── /shutdown ──────────────────────────────────────────────────────────────
   fastify.get('/shutdown', async (_req, reply) => {
     session.reset()
@@ -188,7 +248,7 @@ export function createHttpServer(
     start: async () => {
       await fastify.listen({ port: config.httpPort, host: HOST })
       log('server', `HTTP en http://${HOST}:${config.httpPort}`)
-      for (const r of ['/init', '/self', '/player', '/remove', '/shutdown', '/health']) {
+      for (const r of ['/init', '/self', '/player', '/bulk', '/remove', '/shutdown', '/health']) {
         log('server', `  → GET ${r}`)
       }
     },

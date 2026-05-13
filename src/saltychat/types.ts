@@ -22,10 +22,10 @@ export enum Command {
 export interface InitiateParams {
   Name: string
   ServerUniqueIdentifier: string
-  ChannelId: string
+  ChannelId: number
   ChannelPassword: string
   SoundPack: string
-  SwissChannelIds: string[]
+  SwissChannelIds: number[]
   SendTalkStates: boolean
   SendRadioTrafficStates: boolean
   UltraShortRangeDistance: number
@@ -46,6 +46,11 @@ export interface PlayerState {
   Rotation: number
   VoiceRange: number
   IsAlive: boolean
+}
+
+export interface BulkUpdatePayload {
+  PlayerStates: PlayerState[]
+  SelfState: SelfState
 }
 
 // ── Incoming messages ─────────────────────────────────────────────────────────

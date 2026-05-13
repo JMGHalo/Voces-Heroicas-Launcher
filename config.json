@@ -1,7 +1,7 @@
 {
   "httpPort": 7777,
   "saltyChatWsUrl": "ws://127.0.0.1:8089",
-  "serverUniqueIdentifier": "VocesHeroicas",
+  "serverUniqueIdentifier": "UNUSED — provided at runtime via /init?serverId=...",
   "voiceRanges": {
     "ultraShort": 1.8,
     "short": 8.0,

@@ -5,6 +5,7 @@ import { createConnection } from 'net'
 import type { LauncherConfig } from './launcher-config.js'
 import { buildTs3Url } from './launcher-config.js'
 import type { AppHandle } from '../src/index.js'
+import { detectSaltyChatUrl } from '../src/saltychat/detect.js'
 
 export type ComponentStatus = 'stopped' | 'starting' | 'running' | 'error'
 export type ComponentId = 'teamspeak' | 'intermediate' | 'conan'
@@ -118,12 +119,12 @@ export class TeamSpeakProcess extends EventEmitter {
         this.setState('error', 'Timeout: TeamSpeak no respondió')
         return
       }
-      // SaltyChat port (8089) is optional — TS3 is considered running as soon as
+      // SaltyChat port is optional — TS3 is considered running as soon as
       // the process exists. SaltyChat status only affects the detail text.
       if (await isProcessRunning('ts3client')) {
         this.clearPoll()
         const addr = this.config.teamspeak.autoConnect.address || 'servidor'
-        const wsOk = await checkPort(8089)
+        const wsOk = await checkPort(parseInt(new URL(detectSaltyChatUrl()).port, 10))
         this.setState('running', wsOk ? `Conectado a ${addr}` : `Sin SaltyChat · ${addr}`)
         this.watchTs3()
       }
@@ -156,7 +157,7 @@ export class TeamSpeakProcess extends EventEmitter {
   async init(): Promise<void> {
     if (await isProcessRunning('ts3client')) {
       const addr = this.config.teamspeak.autoConnect.address || 'servidor'
-      const wsOk = await checkPort(8089)
+      const wsOk = await checkPort(parseInt(new URL(detectSaltyChatUrl()).port, 10))
       this.setState('running', wsOk ? `Conectado a ${addr}` : `Sin SaltyChat · ${addr}`)
       this.watchTs3()
     }

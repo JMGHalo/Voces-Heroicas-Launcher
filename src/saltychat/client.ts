@@ -1,8 +1,8 @@
 import { EventEmitter } from 'events'
 import { WebSocket } from 'ws'
 import { log } from '../logger.js'
-import { Command, type InitiateParams, type SelfState, type PlayerState } from './types.js'
-import { buildInitiate, buildSelf, buildPlayer, buildRemove, buildPong } from './messages.js'
+import { Command, type InitiateParams, type SelfState, type PlayerState, type BulkUpdatePayload } from './types.js'
+import { buildInitiate, buildSelf, buildPlayer, buildBulkUpdate, buildRemove, buildPong } from './messages.js'
 import { parseIncoming } from './parse.js'
 
 export interface SaltyChatClientConfig {
@@ -10,13 +10,14 @@ export interface SaltyChatClientConfig {
   serverUniqueIdentifier: string
 }
 
+const RECONNECT_INTERVAL = 5_000
+
 export class SaltyChatClient extends EventEmitter {
   private ws: WebSocket | null = null
   private connected = false
-  private reconnectDelay = 1000
   private destroyed = false
   private droppedCount = 0
-  readonly config: SaltyChatClientConfig
+  config: SaltyChatClientConfig
 
   constructor(config: SaltyChatClientConfig) {
     super()
@@ -31,7 +32,6 @@ export class SaltyChatClient extends EventEmitter {
 
     this.ws.on('open', () => {
       this.connected = true
-      this.reconnectDelay = 1000
       this.droppedCount = 0
       log('saltychat', 'Conectado')
       this.emit('connected')
@@ -45,9 +45,8 @@ export class SaltyChatClient extends EventEmitter {
       this.connected = false
       this.emit('disconnected')
       if (!this.destroyed) {
-        log('saltychat', `Desconectado. Reintentando en ${this.reconnectDelay / 1000}s...`)
-        setTimeout(() => this.connect(), this.reconnectDelay)
-        this.reconnectDelay = Math.min(this.reconnectDelay * 2, 30_000)
+        log('saltychat', `Desconectado. Reintentando en ${RECONNECT_INTERVAL / 1000}s...`)
+        setTimeout(() => this.connect(), RECONNECT_INTERVAL)
       }
     })
 
@@ -124,6 +123,10 @@ export class SaltyChatClient extends EventEmitter {
 
   updatePlayer(state: PlayerState) {
     this.send(buildPlayer(state, this.config.serverUniqueIdentifier))
+  }
+
+  bulkUpdate(payload: BulkUpdatePayload) {
+    this.send(buildBulkUpdate(payload, this.config.serverUniqueIdentifier))
   }
 
   removePlayer(name: string) {

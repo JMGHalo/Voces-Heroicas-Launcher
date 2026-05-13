@@ -1,4 +1,4 @@
-import type { InitiateParams, SelfState, PlayerState } from './types.js'
+import type { InitiateParams, SelfState, PlayerState, BulkUpdatePayload } from './types.js'
 
 function wrap(command: string, suid: string, parameter: unknown): string {
   return JSON.stringify({ Command: command, ServerUniqueIdentifier: suid, Parameter: parameter })
@@ -18,6 +18,10 @@ export function buildPlayer(state: PlayerState, suid: string): string {
 
 export function buildRemove(name: string, suid: string): string {
   return wrap('RemovePlayer', suid, { Name: name })
+}
+
+export function buildBulkUpdate(payload: BulkUpdatePayload, suid: string): string {
+  return wrap('BulkUpdate', suid, payload)
 }
 
 export function buildPong(suid: string): string {
