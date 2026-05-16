@@ -31,6 +31,16 @@ export async function createApp(_config?: Partial<AppConfig>): Promise<AppHandle
     if (name !== session.playerName) saltyChat.removePlayer(name)
   })
 
+  saltyChat.on('connected', () => {
+    const initParams = session.lastInitParams
+    const suid = session.serverUniqueIdentifier
+    if (initParams && session.initiated) {
+      if (suid) saltyChat.config.serverUniqueIdentifier = suid
+      log('session', `Re-iniciando sesión tras reconexión para ${initParams.Name}...`)
+      saltyChat.initiate(initParams)
+    }
+  })
+
   saltyChat.on('instance-state', (msg: InstanceStateMsg) => {
     session.lastInstanceState = msg
   })

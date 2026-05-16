@@ -59,7 +59,7 @@ export class SaltyChatClient {
       Parameter: {
         Name: pos.playerId,
         Position: { X: pos.x, Y: pos.y, Z: pos.z },
-        Rotation: -pos.yaw,
+        Rotation: pos.yaw,
         VoiceRange: 20.0,
         IsAlive: true,
         IsSending: false,

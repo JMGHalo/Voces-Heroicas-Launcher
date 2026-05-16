@@ -111,7 +111,7 @@ export function createHttpServer(
 
     saltyChat.updateSelf({
       Position: { X: x, Y: y, Z: z },
-      Rotation: parseFloat(q.yaw),
+      Rotation: -parseFloat(q.yaw),
       VoiceRange: parseFloat(q.range),
       IsAlive: q.alive === '1',
     })
@@ -140,7 +140,7 @@ export function createHttpServer(
     const state = {
       Name: q.id,
       Position: { X: uu(q.x), Y: uu(q.y), Z: uu(q.z) },
-      Rotation: parseFloat(q.yaw),
+      Rotation: -parseFloat(q.yaw),
       VoiceRange: parseFloat(q.range),
       IsAlive: q.alive === '1',
     }
@@ -192,7 +192,7 @@ export function createHttpServer(
 
       const [id, x, y, z, yaw, range] = parts
       const px = uu(x), py = uu(y), pz = uu(z)
-      const rot = parseFloat(yaw)
+      const rot = -parseFloat(yaw)
       const vr = parseFloat(range)
 
       if (!id || [px, py, pz, rot, vr].some(isNaN)) continue
