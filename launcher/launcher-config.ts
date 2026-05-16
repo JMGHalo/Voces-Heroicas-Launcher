@@ -101,16 +101,21 @@ function detectTs3Path(): string {
   return ''
 }
 
+// ── Voces Heroicas TS3 server (hardcoded — public server, password is anti-DDoS only) ──
+const VH_TS3_ADDRESS  = '94.250.223.26'
+const VH_TS3_PORT     = 15068
+const VH_TS3_PASSWORD = 'V0ces H3roic4s Enhanced!!!!'
+
 function makeDefaults(): LauncherConfig {
   return {
     teamspeak: {
       exePath: detectTs3Path() || 'C:\\Program Files\\TeamSpeak 3 Client\\ts3client_win64.exe',
       autoConnect: {
         enabled: true,
-        address: '',
-        port: 9987,
+        address: VH_TS3_ADDRESS,
+        port: VH_TS3_PORT,
         nickname: '',
-        serverPassword: '',
+        serverPassword: VH_TS3_PASSWORD,
         channel: '',
         channelPassword: '',
       },
@@ -158,6 +163,12 @@ export function loadLauncherConfig(): LauncherConfig {
   } catch {
     config = defaults
   }
+
+  // Always enforce the VH server — overrides any stale value in the stored config
+  config.teamspeak.autoConnect.address        = VH_TS3_ADDRESS
+  config.teamspeak.autoConnect.port           = VH_TS3_PORT
+  config.teamspeak.autoConnect.serverPassword = VH_TS3_PASSWORD
+  config.teamspeak.autoConnect.enabled        = true
 
   refreshPaths(config)
   writeFileSync(path, JSON.stringify(config, null, 2), 'utf8')
