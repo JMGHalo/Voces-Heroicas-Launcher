@@ -195,6 +195,6 @@ export function buildTs3Url(config: LauncherConfig): string {
   if (ac.serverPassword) params.set('password', ac.serverPassword)
   if (ac.channel) params.set('channel', ac.channel)
   if (ac.channelPassword) params.set('channel_password', ac.channelPassword)
-  const query = params.toString()
+  const query = params.toString().replace(/\+/g, '%20')
   return `ts3server://${ac.address}${query ? '?' + query : ''}`
 }
