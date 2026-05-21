@@ -101,10 +101,10 @@ function detectTs3Path(): string {
   return ''
 }
 
-// ── Voces Heroicas TS3 server (hardcoded — public server, password is anti-DDoS only) ──
-const VH_TS3_ADDRESS  = '94.250.223.26'
-const VH_TS3_PORT     = 15068
-const VH_TS3_PASSWORD = 'V0ces H3roic4s Enhanced!!!!'
+// ── Voces Heroicas TS3 server (hardcoded — own bare metal server on OVH) ──
+const VH_TS3_ADDRESS  = '37.187.137.86'
+const VH_TS3_PORT     = 9987
+const VH_TS3_PASSWORD = 'ts3V0c3s!'
 
 function makeDefaults(): LauncherConfig {
   return {
