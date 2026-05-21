@@ -279,11 +279,26 @@ export class ConanProcess extends EventEmitter {
 
     this.setState('starting', useDirect ? 'Iniciando Conan…' : 'Iniciando vía Steam…')
 
+    const ac = this.config.conan.autoConnect
+
     try {
-      if (useDirect) {
+      if (ac?.enabled && ac?.address) {
+        if (useDirect) {
+          // Launch BE.exe directly — bypasses the Funcom launcher.
+          // -ExecCmds runs a UE4 console command on startup; BattleEye may forward
+          // it to the Shipping.exe unlike -connect which it strips.
+          const args = `-ExecCmds="open ${ac.address}:${ac.port}"`
+          execSync(`cmd.exe /c start "" "${launchPath}" ${args}`, { timeout: 5000 })
+        } else {
+          // No direct path — fall back to Steam URL (will show Funcom launcher)
+          const connectArg = `-connect=${ac.address}:${ac.port}`
+          const steamUrl = `steam://run/${this.config.conan.steamAppId}//${connectArg}/`
+          execSync(`cmd.exe /c start "" "${steamUrl}"`, { timeout: 5000 })
+        }
+      } else if (useDirect) {
         execSync(`cmd.exe /c start "" "${launchPath}"`, { timeout: 5000 })
       } else {
-        execSync(`cmd.exe /c "start steam://rungameid/${this.config.conan.steamAppId}"`, {
+        execSync(`cmd.exe /c start "" "steam://rungameid/${this.config.conan.steamAppId}"`, {
           timeout: 5000,
         })
       }

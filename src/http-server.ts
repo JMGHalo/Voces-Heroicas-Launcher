@@ -53,7 +53,10 @@ export function createHttpServer(
       },
     },
   }, async (req, reply) => {
-    const { name, serverId, channelId, channelPwd } = req.query
+    const { name, serverId: rawServerId, channelId, channelPwd } = req.query
+    // HTTP query strings decode '+' as a space. TS3 server UIDs are base64 and
+    // contain '+' and '/', so restore any spaces back to '+' before using the value.
+    const serverId = rawServerId.replace(/ /g, '+')
 
     // Store the Blueprint-provided SUID in both the session and the client so every
     // subsequent message (SelfStateUpdate, PlayerStateUpdate, Pong, …) carries the

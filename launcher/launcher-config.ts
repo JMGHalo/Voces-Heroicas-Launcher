@@ -20,6 +20,12 @@ export interface LauncherConfig {
     steamAppId: string
     exePath: string   // direct exe path; empty = fall back to Steam URL
     battleEye: boolean
+    autoConnect: {
+      enabled: boolean
+      address: string
+      port: number
+      password: string
+    }
   }
   intermediate: {
     autoStart: boolean
@@ -106,6 +112,11 @@ const VH_TS3_ADDRESS  = '37.187.137.86'
 const VH_TS3_PORT     = 9987
 const VH_TS3_PASSWORD = 'ts3V0c3s!'
 
+// ── Voces Heroicas Conan server (hardcoded — same OVH bare metal) ──
+const VH_CONAN_ADDRESS  = '37.187.137.86'
+const VH_CONAN_PORT     = 34700
+const VH_CONAN_PASSWORD = ''
+
 function makeDefaults(): LauncherConfig {
   return {
     teamspeak: {
@@ -120,7 +131,17 @@ function makeDefaults(): LauncherConfig {
         channelPassword: '',
       },
     },
-    conan: { steamAppId: '440900', exePath: detectConanPath(), battleEye: true },
+    conan: {
+      steamAppId: '440900',
+      exePath: detectConanPath(),
+      battleEye: true,
+      autoConnect: {
+        enabled: true,
+        address: VH_CONAN_ADDRESS,
+        port: VH_CONAN_PORT,
+        password: VH_CONAN_PASSWORD,
+      },
+    },
     intermediate: { autoStart: true },
     ui: { startAllOnLaunch: false, stopAllOnClose: true },
     updates: { checkOnLaunch: true, channel: 'stable' },
@@ -156,7 +177,14 @@ export function loadLauncherConfig(): LauncherConfig {
           ...(raw.teamspeak?.autoConnect ?? {}),
         },
       },
-      conan: { ...defaults.conan, ...(raw.conan ?? {}) },
+      conan: {
+        ...defaults.conan,
+        ...(raw.conan ?? {}),
+        autoConnect: {
+          ...defaults.conan.autoConnect,
+          ...(raw.conan?.autoConnect ?? {}),
+        },
+      },
       ui: { ...defaults.ui, ...(raw.ui ?? {}) },
       updates: { ...defaults.updates, ...(raw.updates ?? {}) },
     }
@@ -164,11 +192,16 @@ export function loadLauncherConfig(): LauncherConfig {
     config = defaults
   }
 
-  // Always enforce the VH server — overrides any stale value in the stored config
+  // Always enforce the VH servers — overrides any stale value in the stored config
   config.teamspeak.autoConnect.address        = VH_TS3_ADDRESS
   config.teamspeak.autoConnect.port           = VH_TS3_PORT
   config.teamspeak.autoConnect.serverPassword = VH_TS3_PASSWORD
   config.teamspeak.autoConnect.enabled        = true
+
+  config.conan.autoConnect.address  = VH_CONAN_ADDRESS
+  config.conan.autoConnect.port     = VH_CONAN_PORT
+  config.conan.autoConnect.password = VH_CONAN_PASSWORD
+  config.conan.autoConnect.enabled  = true
 
   refreshPaths(config)
   writeFileSync(path, JSON.stringify(config, null, 2), 'utf8')
