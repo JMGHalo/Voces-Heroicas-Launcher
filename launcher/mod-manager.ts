@@ -78,7 +78,7 @@ function findPakRelative(modDir: string): string | null {
 }
 
 // Walk up the exe path to find the Steam library root (parent of "steamapps" folder)
-function getSteamLibrary(exePath: string): string {
+export function getSteamLibrary(exePath: string): string {
   let p = exePath
   while (true) {
     const parent = dirname(p)

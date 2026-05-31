@@ -55,6 +55,10 @@ declare global {
         subscribeAll: () => Promise<void>
         writeModlist: () => Promise<ModWriteResult>
       }
+      engine: {
+        applyCrispyLights: () => Promise<{ ok: boolean; alreadyPresent?: boolean; error?: string }>
+        removeCrispyLights: () => Promise<{ ok: boolean; error?: string }>
+      }
     }
   }
 }
@@ -200,7 +204,7 @@ async function refreshModStatus(): Promise<void> {
       detail.textContent = `Faltan ${r.missing.length} mod(s) — suscríbete a la colección primero`
     } else if (r.modlistExists) {
       dot.className = 'dot running'
-      detail.textContent = 'modlist.txt activo'
+      detail.textContent = ''
     } else {
       dot.className = 'dot stopped'
       detail.textContent = 'Mods descargados — haz clic en "Aplicar mods"'
@@ -249,3 +253,35 @@ el<HTMLButtonElement>('btn-write-modlist').addEventListener('click', async () =>
 })
 
 refreshModStatus()
+
+// ── CrispyLights Engine.ini ───────────────────────────────────────────────────
+
+el<HTMLButtonElement>('btn-apply-crispy-lights').addEventListener('click', async () => {
+  const btn = el<HTMLButtonElement>('btn-apply-crispy-lights')
+  btn.disabled = true
+  try {
+    const r = await window.launcher.engine.applyCrispyLights()
+    if (r.ok) {
+      showToast(r.alreadyPresent ? 'CrispyLights ya estaba aplicado (solo lectura confirmado)' : 'Engine.ini escrito y marcado como solo lectura')
+    } else {
+      showToast(`Error: ${r.error}`)
+    }
+  } finally {
+    btn.disabled = false
+  }
+})
+
+el<HTMLButtonElement>('btn-remove-crispy-lights').addEventListener('click', async () => {
+  const btn = el<HTMLButtonElement>('btn-remove-crispy-lights')
+  btn.disabled = true
+  try {
+    const r = await window.launcher.engine.removeCrispyLights()
+    if (r.ok) {
+      showToast('Configuración CrispyLights eliminada del Engine.ini')
+    } else {
+      showToast(`Error: ${r.error}`)
+    }
+  } finally {
+    btn.disabled = false
+  }
+})

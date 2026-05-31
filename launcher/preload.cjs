@@ -25,4 +25,8 @@ contextBridge.exposeInMainWorld('launcher', {
     subscribeAll: () => ipcRenderer.invoke('mods:subscribe-all'),
     writeModlist: () => ipcRenderer.invoke('mods:write-modlist'),
   },
+  engine: {
+    applyCrispyLights: () => ipcRenderer.invoke('engine:apply-crispy-lights'),
+    removeCrispyLights: () => ipcRenderer.invoke('engine:remove-crispy-lights'),
+  },
 })

@@ -152,6 +152,30 @@ html, body {
 }
 .btn-mod-primary:hover:not(:disabled) { background: #344d70; }
 
+.btn-mod-danger {
+  background: #3a1a1a;
+  border-color: #5a2a2a;
+}
+.btn-mod-danger:hover:not(:disabled) { background: #4a2020; }
+
+.card-sub-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding-left: 20px;
+}
+
+.card-sub-actions .btn-row {
+  display: flex;
+  gap: 4px;
+}
+
+.crispy-warning {
+  font-size: 10px;
+  color: #ffa500;
+}
+
 /* ── Footer ────────────────────────────────────────────────────────────────── */
 .footer {
   position: absolute;

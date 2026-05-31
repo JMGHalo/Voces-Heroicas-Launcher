@@ -5,7 +5,7 @@ import { dirname, join } from 'path'
 import { loadLauncherConfig, refreshPaths, saveLauncherConfig } from './launcher-config.js'
 import { ProcessManager } from './process-manager.js'
 import type { ComponentId } from './process-manager.js'
-import { checkMods, writeModlist, subscribeToAll } from './mod-manager.js'
+import { checkMods, writeModlist, subscribeToAll, getSteamLibrary } from './mod-manager.js'
 
 const require = createRequire(import.meta.url)
 
@@ -23,7 +23,7 @@ function createWindow(config: ReturnType<typeof loadLauncherConfig>): void {
 
   mainWindow = new BrowserWindow({
     width: 520,
-    height: 420,
+    height: 452,
     resizable: false,
     maximizable: false,
     fullscreenable: false,
@@ -147,7 +147,7 @@ ipcMain.on('all:stop', () => {
 
 let currentConfig: ReturnType<typeof loadLauncherConfig> | null = null
 
-import { existsSync } from 'fs'
+import { existsSync, readFileSync, writeFileSync, mkdirSync, chmodSync, unlinkSync } from 'fs'
 
 async function ensurePaths(): Promise<{ ts: string; conan: string }> {
   if (!currentConfig) return { ts: '', conan: '' }
@@ -199,3 +199,80 @@ ipcMain.handle('mods:check', () => checkMods(currentConfig?.conan.exePath ?? '')
 ipcMain.handle('mods:subscribe-all', () => subscribeToAll())
 
 ipcMain.handle('mods:write-modlist', () => writeModlist(currentConfig?.conan.exePath ?? ''))
+
+// ── CrispyLights Engine.ini ───────────────────────────────────────────────────
+
+const CRISPY_HEADER = '[/Game/Mods/CrispyLights/Settings.Settings_C]'
+const CRISPY_SECTION = `[/Game/Mods/CrispyLights/Settings.Settings_C]
+DynamicShadows=False
+VolumetricShadows=True
+ShadowsEverywhere=True`
+
+function getEngineIniPath(conanExePath: string): string {
+  const lib = getSteamLibrary(conanExePath)
+  if (!lib) return ''
+  return join(lib, 'steamapps', 'common', 'Conan Exiles', 'ConanSandbox', 'Saved', 'Config', 'Windows', 'Engine.ini')
+}
+
+function removeCrispySection(content: string): string {
+  const lines = content.split(/\r?\n/)
+  const result: string[] = []
+  let inSection = false
+  for (const line of lines) {
+    if (line.trim() === CRISPY_HEADER) { inSection = true; continue }
+    if (inSection && line.trim().startsWith('[')) inSection = false
+    if (!inSection) result.push(line)
+  }
+  return result.join('\n').replace(/\n{3,}/g, '\n\n')
+}
+
+ipcMain.handle('engine:apply-crispy-lights', () => {
+  const exePath = currentConfig?.conan.exePath ?? ''
+  if (!exePath) return { ok: false, error: 'Ruta de Conan Exiles no detectada' }
+  const iniPath = getEngineIniPath(exePath)
+  if (!iniPath) return { ok: false, error: 'No se pudo encontrar la carpeta de Steam' }
+
+  try {
+    let existing = ''
+    if (existsSync(iniPath)) {
+      existing = readFileSync(iniPath, 'utf8')
+      if (existing.includes(CRISPY_HEADER)) {
+        chmodSync(iniPath, 0o444)
+        return { ok: true, alreadyPresent: true }
+      }
+      chmodSync(iniPath, 0o666)
+    } else {
+      mkdirSync(dirname(iniPath), { recursive: true })
+    }
+    const sep = existing.length > 0 ? (existing.endsWith('\n') ? '\n' : '\n\n') : ''
+    writeFileSync(iniPath, existing + sep + CRISPY_SECTION + '\n', 'utf8')
+    chmodSync(iniPath, 0o444)
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: (err as Error).message }
+  }
+})
+
+ipcMain.handle('engine:remove-crispy-lights', () => {
+  const exePath = currentConfig?.conan.exePath ?? ''
+  if (!exePath) return { ok: false, error: 'Ruta de Conan Exiles no detectada' }
+  const iniPath = getEngineIniPath(exePath)
+  if (!iniPath) return { ok: false, error: 'No se pudo encontrar la carpeta de Steam' }
+
+  if (!existsSync(iniPath)) return { ok: true }
+
+  try {
+    const content = readFileSync(iniPath, 'utf8')
+    if (!content.includes(CRISPY_HEADER)) return { ok: true }
+    chmodSync(iniPath, 0o666)
+    const cleaned = removeCrispySection(content)
+    if (cleaned.trim() === '') {
+      unlinkSync(iniPath)
+    } else {
+      writeFileSync(iniPath, cleaned, 'utf8')
+    }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, error: (err as Error).message }
+  }
+})
